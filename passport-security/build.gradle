@@ -1,6 +1,7 @@
 dependencies {
     implementation project(':passport-core')
     implementation project(':passport-bean')
+    implementation project(':passport-authorization')
 
     //spring
     implementation 'org.springframework.boot:spring-boot-starter'

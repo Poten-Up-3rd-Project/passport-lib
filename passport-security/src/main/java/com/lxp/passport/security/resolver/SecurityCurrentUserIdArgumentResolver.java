@@ -1,6 +1,6 @@
 package com.lxp.passport.security.resolver;
 
-import com.lxp.passport.core.annotation.CurrentUserId;
+import com.lxp.passport.authorization.annotation.CurrentUserId;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
