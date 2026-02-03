@@ -1,4 +1,4 @@
-package com.lxp.passport.core.annotation;
+package com.lxp.passport.authorization.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
