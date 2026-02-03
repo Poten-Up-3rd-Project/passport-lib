@@ -7,6 +7,8 @@
 
 스프링 애플리케이션에서 JWT 기반의 경량 인증 토큰(Passport)을 발급·검증하고, 요청 컨텍스트/보안 컨텍스트에 쉽게 연동할 수 있도록 제공하는 멀티 모듈 라이브러리입니다.
 
+<br>
+
 ## 모듈 구성
 
 - `passport-core`: JWT 인코딩/검증, 클레임 스펙, 컨텍스트 유틸리티
@@ -14,10 +16,14 @@
   traceId) 설정
 - `passport-security`: Spring Security 연동 필터(`PassportAuthenticationFilter`) 및 어댑터
 
+<br>
+
 ## 요구 사항
 
 - Java 17+
 - Spring Boot 3.5.x
+
+<br>
 
 ## 설치(의존성 추가)
 
@@ -59,6 +65,8 @@ dependencies {
 
 - 최신 태그(Tags) 또는 사용 가능한 버전은 상단 뱃지 링크(JitPack 페이지)에서 확인하세요.
 
+<br>
+
 ## 기본 설정
 
 `application.yml`에 서명 키와 만료 시간을 설정합니다.
@@ -72,12 +80,16 @@ passport:
 
 해당 설정은 `PassportBeanAutoConfiguration`을 통해 `KeyProperties`/`SecretKey` 빈으로 주입됩니다.
 
+<br>
+
 ## 동작 개요
 
 - 수신: 서블릿 필터 `PassportFilter`가 요청 헤더 `X-Passport`를 읽어 서명·만료를 검증하고, 성공 시 `PassportContext`에 `PassportClaims`를 바인딩합니다. 또한
   MDC에 `traceId`를 넣습니다.
 - 보안 컨텍스트(Spring Security): `PassportAuthenticationFilter`가 `PassportContext` 값을 `Authentication`으로 변환하여
   `SecurityContextHolder`에 설정합니다.
+
+<br>
 
 ## 사용법
 
@@ -98,6 +110,8 @@ String jwt = encoder.encode(claims);   // 서명된 JWT 문자열
 
 발급한 JWT는 호출자에게 `X-Passport` 헤더로 전달하세요.
 
+<br>
+
 ### 2) 필터 등록 및 보안 연동
 
 - Spring MVC만 사용하는 경우: `passport-bean` 모듈의 `PassportFilter`가 `@Component`로 자동 등록됩니다.
@@ -114,6 +128,8 @@ SecurityFilterChain securityFilterChain(HttpSecurity http,
         .build();
 }
 ```
+
+<br>
 
 ### 3) 컨트롤러/서비스에서 클레임 접근
 
@@ -132,6 +148,8 @@ String userId = auth != null ? (String) auth.getPrincipal() : null;
 Collection<? extends GrantedAuthority> authorities = auth != null ? auth.getAuthorities() : List.of();
 ```
 
+<br>
+
 ### 4) 하행(Outbound) 호출 시 헤더 전파
 
 현재 요청의 토큰을 다른 마이크로서비스에 전달하려면 `PassportHeaderProvider`를 사용하세요.
@@ -143,6 +161,8 @@ Map<String, String> headers = provider.headers(); // { "X-Passport": "<jwt>" }
 
 이 값을 `RestTemplate` 인터셉터나 Feign `RequestInterceptor`에서 활용하면 됩니다.
 
+<br>
+
 ## 클레임 스펙
 
 - 헤더: `X-Passport`
@@ -151,11 +171,15 @@ Map<String, String> headers = provider.headers(); // { "X-Passport": "<jwt>" }
     - `rol`(권한, 콤마 구분 문자열)
     - `tid`(분산 추적 ID, UUID)
 
+<br>
+
 ## 빌드
 
 ```bash
 ./gradlew clean build
 ```
+
+<br>
 
 ## 트러블슈팅
 
