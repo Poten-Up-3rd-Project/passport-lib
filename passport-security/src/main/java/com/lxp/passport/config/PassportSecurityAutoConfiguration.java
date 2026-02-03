@@ -20,7 +20,7 @@ public class PassportSecurityAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(AuthenticationEntryPoint.class)
+    @ConditionalOnMissingBean
     public AuthenticationEntryPoint passportAuthenticationEntryPoint() {
         return new PassportAuthenticationEntryPoint();
     }
