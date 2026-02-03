@@ -4,6 +4,7 @@ import com.lxp.passport.bean.filter.PassportFilter;
 import com.lxp.passport.bean.support.DefaultPassportHeaderProvider;
 import com.lxp.passport.bean.support.PassportExtractor;
 import com.lxp.passport.core.config.KeyProperties;
+import com.lxp.passport.core.support.PassportEncoder;
 import com.lxp.passport.core.support.PassportHeaderProvider;
 import com.lxp.passport.core.support.PassportVerifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -33,6 +34,12 @@ public class PassportBeanAutoConfiguration {
     @ConditionalOnMissingBean
     public PassportExtractor passportExtractor() {
         return new PassportExtractor();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PassportEncoder passportEncoder(KeyProperties keyProperties) {
+        return new PassportEncoder(keyProperties);
     }
 
     @Bean
