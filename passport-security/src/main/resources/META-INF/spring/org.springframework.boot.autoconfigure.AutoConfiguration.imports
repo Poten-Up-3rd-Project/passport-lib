@@ -1,2 +1,2 @@
-com.lxp.passport.config.PassportSecurityAutoConfiguration
-com.lxp.passport.config.PassportSecurityWebAutoConfiguration
+com.lxp.passport.security.config.PassportSecurityAutoConfiguration
+com.lxp.passport.security.config.PassportSecurityWebAutoConfiguration
