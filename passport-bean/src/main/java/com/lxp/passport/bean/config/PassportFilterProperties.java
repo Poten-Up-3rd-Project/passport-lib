@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -11,6 +12,9 @@ import java.util.List;
 @ConfigurationProperties(prefix = "passport.filter")
 public class PassportFilterProperties {
 
-    private List<String> excludePaths;
+    /**
+     * Ant 패턴 경로 목록. 기본값은 빈 리스트.
+     */
+    private List<String> excludePaths = new ArrayList<>();
 
 }
