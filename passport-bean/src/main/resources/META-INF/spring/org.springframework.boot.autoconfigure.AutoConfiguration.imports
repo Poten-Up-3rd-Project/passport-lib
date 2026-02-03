@@ -1,1 +1,2 @@
 com.lxp.passport.config.PassportBeanAutoConfiguration
+com.lxp.passport.config.PassportWebAutoConfiguration
