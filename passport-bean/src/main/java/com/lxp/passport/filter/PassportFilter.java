@@ -1,23 +1,21 @@
 package com.lxp.passport.filter;
 
 import com.lxp.passport.context.PassportContext;
+import com.lxp.passport.model.PassportClaims;
+import com.lxp.passport.support.PassportExtractor;
+import com.lxp.passport.support.PassportVerifier;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import com.lxp.passport.model.PassportClaims;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.lxp.passport.support.PassportExtractor;
-import com.lxp.passport.support.PassportVerifier;
 
 import java.io.IOException;
 
 import static java.util.Objects.isNull;
 
-@Component
 @RequiredArgsConstructor
 public class PassportFilter extends OncePerRequestFilter {
 
