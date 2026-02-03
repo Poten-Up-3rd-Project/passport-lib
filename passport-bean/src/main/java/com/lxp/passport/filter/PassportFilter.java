@@ -1,5 +1,6 @@
 package com.lxp.passport.filter;
 
+import com.lxp.passport.config.PassportFilterProperties;
 import com.lxp.passport.context.PassportContext;
 import com.lxp.passport.model.PassportClaims;
 import com.lxp.passport.support.PassportExtractor;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,8 +21,11 @@ import static java.util.Objects.isNull;
 @RequiredArgsConstructor
 public class PassportFilter extends OncePerRequestFilter {
 
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
     private final PassportExtractor extractor;
     private final PassportVerifier verifier;
+    private final PassportFilterProperties properties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -46,5 +51,13 @@ public class PassportFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+
+        return properties.excludePaths().stream()
+            .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 }

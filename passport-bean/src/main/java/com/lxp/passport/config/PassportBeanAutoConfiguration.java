@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Bean;
 import javax.crypto.SecretKey;
 
 @AutoConfiguration
-@EnableConfigurationProperties(PassportJwtProperties.class)
+@EnableConfigurationProperties({PassportJwtProperties.class, PassportFilterProperties.class})
 public class PassportBeanAutoConfiguration {
 
     @Bean
@@ -48,7 +48,7 @@ public class PassportBeanAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public PassportFilter passportFilter(PassportExtractor ex, PassportVerifier vf) {
-        return new PassportFilter(ex, vf);
+    public PassportFilter passportFilter(PassportExtractor ex, PassportVerifier vf, PassportFilterProperties pp) {
+        return new PassportFilter(ex, vf, pp);
     }
 }
