@@ -57,7 +57,7 @@ public class PassportFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
 
-        return properties.excludePaths().stream()
+        return properties.getExcludePaths().stream()
             .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 }
