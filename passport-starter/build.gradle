@@ -1,0 +1,8 @@
+dependencies {
+    api project(':passport-core')
+    api project(':passport-bean')
+}
+
+jar {
+    enabled = true
+}

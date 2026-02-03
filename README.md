@@ -12,9 +12,9 @@
 ## 모듈 구성
 
 - `passport-core`: JWT 인코딩/검증, 클레임 스펙, 컨텍스트 유틸리티
-- `passport-bean`: Spring Boot 자동 구성(키/프로퍼티), 서블릿 필터(`PassportFilter`)로 `X-Passport` 헤더 검증 및 `PassportContext` 저장, MDC(
-  traceId) 설정
-- `passport-security`: Spring Security 연동 필터(`PassportAuthenticationFilter`) 및 어댑터
+- `passport-bean`: Spring Boot 자동 구성(키/프로퍼티/필터). 서블릿 필터(`PassportFilter`)로 `X-Passport` 헤더 검증 및 `PassportContext` 저장, MDC(traceId) 설정. Filter 빈은 자동 등록됩니다.
+- `passport-authorization`: 보안 미사용(MVC) 환경용 편의 기능. `@CurrentUserId` 인자 주입, `@RequireRole` AOP 권한 체크.
+- `passport-security`: Spring Security 연동. `PassportAuthenticationFilter`/`AuthenticationEntryPoint` 빈을 자동 구성합니다(체인 적용은 소비자 설정에서 수행).
 
 <br>
 
@@ -45,11 +45,13 @@ dependencyResolutionManagement {
 
 2) 의존성 선언
 
-- 모든 모듈 한 번에 사용
+- 스타터로 간단 적용(core + bean 번들)
 
 ```gradle
 dependencies {
-  implementation 'com.github.Poten-Up-3rd-Project:passport-lib:{TAG}'
+  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-starter:{$version}'
+  // Spring Security를 사용하는 서비스라면 추가로 보안 모듈을 의존하세요
+  // implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-security:{$version}'
 }
 ```
 
@@ -57,9 +59,12 @@ dependencies {
 
 ```gradle
 dependencies {
-  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-core:{TAG}'
-  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-bean:{TAG}'
-  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-security:{TAG}'
+  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-core:{$version}'
+  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-bean:{$version}'
+  // 보안 미사용 서비스
+  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-authorization:{$version}'
+  // 보안 사용 서비스(Spring Security)
+  implementation 'com.github.Poten-Up-3rd-Project.passport-lib:passport-security:{$version}'
 }
 ```
 
@@ -69,16 +74,18 @@ dependencies {
 
 ## 기본 설정
 
-`application.yml`에 서명 키와 만료 시간을 설정합니다.
+`application.yml`에 서명 키/만료 시간과(선택) 제외 경로를 설정합니다.
 
 ```yaml
 passport:
   key:
-    secretKey: "your-256bit-secret-key-here" # HMAC 서명용 비밀키(충분한 길이 권장)
+    secretKey: "your-256bit-secret-key-here" # HMAC 서명용 비밀키(HS256/HS512, 충분한 길이 권장)
     durationMillis: 3600000                    # 토큰 만료(ms)
+  filter:
+    exclude-paths: []                          # 선택: 필터를 건너뛸 Ant 패턴 목록 (기본값 빈 목록)
 ```
 
-해당 설정은 `PassportBeanAutoConfiguration`을 통해 `KeyProperties`/`SecretKey` 빈으로 주입됩니다.
+해당 설정은 `PassportBeanAutoConfiguration`을 통해 `KeyProperties`/`SecretKey`/`PassportFilter` 빈으로 주입·등록됩니다.
 
 <br>
 
@@ -114,38 +121,71 @@ String jwt = encoder.encode(claims);   // 서명된 JWT 문자열
 
 ### 2) 필터 등록 및 보안 연동
 
-- Spring MVC만 사용하는 경우: `passport-bean` 모듈의 `PassportFilter`가 `@Component`로 자동 등록됩니다.
-- Spring Security를 사용하는 경우: `passport-security`의 필터를 체인에 추가합니다.
+- Spring MVC(보안 미사용): `passport-bean`의 `PassportFilter`가 Servlet 필터로 자동 등록되어 `X-Passport`를 검증하고 `PassportContext`를 채웁니다.
+- Spring Security 사용: `passport-security`가 필터/엔트리포인트 빈을 제공하며, 다음 순서를 보장해야 합니다.
+  - PassportFilter(서블릿 필터) → PassportAuthenticationFilter(보안 체인 내부)
 
-```java
-
+서블릿 필터 순서 보장(FilterRegistrationBean 사용)
+```java path=null start=null
 @Bean
-SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                        PassportAuthenticationFilter passportAuthenticationFilter) throws Exception {
+public FilterRegistrationBean<PassportFilter> passportFilterRegistration(PassportFilter filter) {
+    var reg = new FilterRegistrationBean<>(filter);
+    reg.setOrder(Ordered.HIGHEST_PRECEDENCE + 10); // SecurityFilterChain(필터 프록시)보다 앞서도록 충분히 높게
+    return reg;
+}
+```
+
+보안 체인에 연동
+```java path=null start=null
+@Bean
+SecurityFilterChain security(HttpSecurity http,
+                             PassportAuthenticationFilter passportAuthenticationFilter,
+                             AuthenticationEntryPoint passportAuthenticationEntryPoint) throws Exception {
     return http
-        // ... 기존 보안 설정
         .addFilterBefore(passportAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(e -> e.authenticationEntryPoint(passportAuthenticationEntryPoint))
         .build();
 }
+```
+
+필터 제외가 필요하면 `passport.filter.exclude-paths`에 패턴을 추가하세요.
+
+```yaml path=null start=null
+passport:
+  filter:
+    exclude-paths:
+      - /auth/login
+      - /auth/refresh
+      - /actuator/**
 ```
 
 <br>
 
 ### 3) 컨트롤러/서비스에서 클레임 접근
 
-`PassportContext`에서 현재 요청의 클레임을 꺼낼 수 있습니다.
-
-```java
-PassportClaims claims = PassportContext.get(); // 없으면 null 반환
+- 공통: `PassportContext`에서 현재 요청의 클레임을 가져올 수 있습니다.
+```java path=null start=null
+PassportClaims claims = PassportContext.get(); // 없으면 null
 String userId = claims != null ? claims.userId() : null;
 ```
-
-Spring Security를 쓴다면 표준 방식으로 인증 정보에 접근 가능합니다.
-
-```java
+- 보안 미사용(MVC): `passport-authorization`을 추가하면 `@CurrentUserId`로 주입 가능합니다.
+```java path=null start=null
+@GetMapping("/me")
+public MeResponse me(@CurrentUserId String userId) {
+    // ...
+}
+```
+- 보안 사용(Security): 표준 방식으로 인증 정보 접근
+```java path=null start=null
 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 String userId = auth != null ? (String) auth.getPrincipal() : null;
 Collection<? extends GrantedAuthority> authorities = auth != null ? auth.getAuthorities() : List.of();
+```
+- 역할 검사: `@RequireRole`(anyOf 지원)
+```java path=null start=null
+@RequireRole(value = {"ROLE_INSTRUCTOR"}, anyOf = {"ROLE_ADMIN"})
+@PutMapping("/role")
+public void updateRole(@CurrentUserId String userId) { /* ... */ }
 ```
 
 <br>
@@ -183,10 +223,17 @@ Map<String, String> headers = provider.headers(); // { "X-Passport": "<jwt>" }
 
 ## 트러블슈팅
 
-- 401 Unauthorized가 발생한다면
-    - `passport.key.secretKey`가 충분한 길이인지 확인하세요(HMAC-SHA 키는 256bit 이상 권장)
-    - `durationMillis` 만료 여부 확인
-    - `X-Passport` 헤더가 누락되었는지 확인
-- 보안 컨텍스트가 비어 있다면(Spring Security)
-    - `PassportAuthenticationFilter`가 체인에 추가되었는지 확인
+- 401 Unauthorized
+  - `passport.key.secretKey`가 발급·검증 서비스 모두 동일한지 확인(길이 충분)
+  - 토큰 만료(exp) 확인, 서버 시간 드리프트 점검
+  - `X-Passport` 헤더가 백엔드까지 전달되는지 확인(게이트웨이 경로/헤더 재작성 주의)
+- 403 Forbidden(@RequireRole)
+  - 토큰 `rol` 값과 요구 역할이 일치하는지 확인
+  - 접두사 차이 허용(ROLE_ / non-prefixed) — v1.1.x부터 지원
+- 필터가 너무 일찍/늦게 동작
+  - `passport.filter.exclude-paths`로 제외 범위 조정
+- 진단 로그
+```properties path=null start=null
+logging.level.com.lxp.passport=DEBUG
+```
 
