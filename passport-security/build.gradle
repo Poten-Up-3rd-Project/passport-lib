@@ -1,0 +1,17 @@
+dependencies {
+    implementation project(':passport-core')
+    implementation project(':passport-bean')
+
+    //spring
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    //security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+}
+
+jar {
+    enabled = true
+}
+

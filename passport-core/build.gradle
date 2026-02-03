@@ -1,0 +1,13 @@
+dependencies {
+    // jjwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    // jackson
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}
+
+jar {
+    enabled = true
+}
