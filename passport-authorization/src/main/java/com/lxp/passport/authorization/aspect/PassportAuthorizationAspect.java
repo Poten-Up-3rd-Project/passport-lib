@@ -22,7 +22,7 @@ import static java.util.Objects.isNull;
 @RequiredArgsConstructor
 public class PassportAuthorizationAspect {
 
-    @Around("@annotation(requireRole)")
+    @Around("@annotation(requireRole) || @within(requireRole)")
     public Object authorize(
         ProceedingJoinPoint joinPoint,
         RequireRole requireRole
